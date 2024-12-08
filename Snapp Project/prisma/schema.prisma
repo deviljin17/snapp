@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Detection Results
+model DetectionResult {
+  id        String        @id @default(uuid())
+  imageUrl  String
+  timestamp DateTime      @default(now())
+  items     DetectedItem[]
+}
+
+model DetectedItem {
+  id          String        @id @default(uuid())
+  label       String        // e.g., "Dress", "Shoes"
+  brand       String?       // Detected brand name
+  brandConfidence Float?    // Brand detection confidence
+  confidence  Float         // Detection confidence score
+  coordinates Json          // Bounding box coordinates
+  brandCoordinates Json?    // Brand logo/text bounding box
+  features    Json?         // Extracted feature vector for similarity search
+  isManualTag Boolean       @default(false)
+  resultId    String
+  result      DetectionResult @relation(fields: [resultId], references: [id])
+  matches     ProductMatch[]
+
+  @@index([resultId])
+  @@index([brand])
+}
+
+model Product {
+  id          String        @id @default(uuid())
+  name        String
+  brand       String?
+  category    String
+  color       String?
+  description String?
+  price       Float
+  sustainability SustainabilityInfo?
+  imageUrl    String
+  features    Json          // Product features including color and similarity vector
+  stores      StoreProduct[]
+  matches     ProductMatch[]
+  favorites   UserFavorite[]
+
+  @@index([category])
+  @@index([brand])
+  @@index([color])
+}
+
+model SustainabilityInfo {
+  id          String   @id @default(uuid())
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id])
+  ecoFriendly Boolean  @default(false)
+  recycledMaterials Boolean @default(false)
+  secondHand  Boolean  @default(false)
+  organicMaterials Boolean @default(false)
+  carbonNeutral Boolean @default(false)
+  certifications String[] // e.g., ["GOTS", "Fair Trade"]
+  score       Float     // Overall sustainability score (0-100)
+  details     Json?     // Additional sustainability details
+  updatedAt   DateTime  @updatedAt
+
+  @@index([productId])
+  @@index([score])
+}
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  name           String?
+  preferences    UserPreference?
+  favorites      UserFavorite[]
+  uploadLogs     UploadLog[]
+  detectionLogs  DetectionLog[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model UserPreference {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  brands        String[]  // Favorite brands
+  categories    String[]  // Preferred categories
+  colors        String[]  // Preferred colors
+  minPrice      Float?    // Minimum price preference
+  maxPrice      Float?    // Maximum price preference
+  stores        String[]  // Preferred stores
+  sizePrefs     Json      // Size preferences by category
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model UserFavorite {
+  id          String   @id @default(uuid())
+  userId      String
+  productId   String
+  user        User     @relation(fields: [userId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+  createdAt   DateTime @default(now())
+  alerts      WishlistAlert[]
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model WishlistAlert {
+  id          String       @id @default(uuid())
+  favoriteId  String
+  favorite    UserFavorite @relation(fields: [favoriteId], references: [id])
+  type        AlertType
+  targetPrice Float?       // For price drop alerts
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  notifications Notification[]
+
+  @@index([favoriteId])
+}
+
+model Notification {
+  id          String        @id @default(uuid())
+  userId      String
+  alertId     String
+  alert       WishlistAlert @relation(fields: [alertId], references: [id])
+  type        NotificationType
+  message     String
+  read        Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  readAt      DateTime?
+
+  @@index([userId])
+  @@index([alertId])
+  @@index([createdAt])
+}
+
+enum AlertType {
+  PRICE_DROP
+  BACK_IN_STOCK
+  ANY_CHANGE
+}
+
+enum NotificationType {
+  PRICE_DECREASE
+  PRICE_INCREASE
+  BACK_IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+model Store {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  domain      String        @unique
+  apiKey      String?       // For store API integration
+  products    StoreProduct[]
+  active      Boolean       @default(true)
+
+  @@index([domain])
+}
+
+model StoreProduct {
+  id          String   @id @default(uuid())
+  productId   String
+  storeId     String
+  price       Float
+  url         String
+  inStock     Boolean  @default(true)
+  lastChecked DateTime @default(now())
+  product     Product  @relation(fields: [productId], references: [id])
+  store       Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([productId, storeId])
+  @@index([productId])
+  @@index([storeId])
+}
+
+model ProductMatch {
+  id            String      @id @default(uuid())
+  detectedItemId String
+  productId     String
+  similarity    Float       // Similarity score
+  detectedItem  DetectedItem @relation(fields: [detectedItemId], references: [id])
+  product       Product     @relation(fields: [productId], references: [id])
+
+  @@index([detectedItemId])
+  @@index([productId])
+  @@index([similarity])
+  @@index([resultId, confidence])
+  @@index([category, price])
+  @@index([brand, price])
+  @@index([store])
+}
+
+model UploadLog {
+  id        String   @id @default(uuid())
+  userId    String
+  imageUrl  String
+  success   Boolean
+  error     String?
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model DetectionLog {
+  id         String   @id @default(uuid())
+  userId     String
+  detectionId String
+  itemCount  Int
+  success    Boolean
+  error      String?
+  timestamp  DateTime @default(now())
+
+  @@index([userId])
+  @@index([detectionId])
+  @@index([timestamp])
+}
+
+model ErrorLog {
+  id           String   @id @default(uuid())
+  endpoint     String
+  errorMessage String
+  errorStack   String?
+  userId       String?
+  timestamp    DateTime @default(now())
+
+  @@index([endpoint])
+  @@index([timestamp])
+}
+
+model ShareLink {
+  id          String    @id
+  title       String
+  description String
+  imageUrl    String?
+  matches     Json?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  views       Int       @default(0)
+
+  @@index([createdAt])
+  @@index([expiresAt])
+}
+
+model DetectionTestLog {
+  id                String   @id @default(uuid())
+  totalTests        Int
+  accuracyByThreshold Json
+  optimalThreshold  Float
+  qualityIssues     Json
+  timestamp         DateTime @default(now())
+
+  @@index([timestamp])
+}
+
+model UserABTest {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  groupId     String
+  assignedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([groupId])
+}
+
+model ABTestMetric {
+  id          String   @id @default(uuid())
+  userId      String
+  groupId     String
+  type        String   // 'impression', 'click', 'conversion'
+  value       Float?   // For conversion value/revenue
+  timestamp   DateTime @default(now())
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([type])
+  @@index([timestamp])
+}
+
+model SearchLog {
+  id          String   @id @default(uuid())
+  userId      String
+  query       String?
+  imageId     String?
+  category    String?
+  matchCount  Int
+  successful  Boolean
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model ProductView {
+  id          String   @id @default(uuid())
+  userId      String
+  productId   String
+  source      String   // 'search', 'trending', 'similar'
+  product     Product  @relation(fields: [productId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model StoreErrorLog {
+  id           String   @id @default(uuid())
+  store        String
+  productUrl   String
+  errorMessage String
+  errorStack   String?
+  timestamp    DateTime @default(now())
+
+  @@index([store])
+  @@index([timestamp])
+}

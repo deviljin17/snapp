@@ -1,0 +1,45 @@
+{
+  "app": {
+    "name": "Snapp",
+    "tagline": "Encuentra tu estilo perfecto en segundos"
+  },
+  "features": {
+    "snap": {
+      "title": "Toma una Foto",
+      "description": "Toma una foto de cualquier prenda que te guste"
+    },
+    "match": {
+      "title": "Descubre Coincidencias",
+      "description": "Nuestra IA encuentra estilos similares al instante"
+    },
+    "shop": {
+      "title": "Compra tu Estilo",
+      "description": "Compara precios y compra directamente en tus tiendas favoritas"
+    }
+  },
+  "cta": {
+    "findNow": "Buscar Ahora",
+    "snapShop": "Captura y Compra",
+    "download": "Descargar Ahora"
+  },
+  "results": {
+    "title": "Estilos Similares Encontrados",
+    "match": "{{confidence}}% de coincidencia",
+    "price": "Precio",
+    "stores": "Disponible en {{count}} tiendas",
+    "bestPrice": "Mejor Precio",
+    "freeShipping": "Envío Gratis"
+  },
+  "filters": {
+    "category": "Categoría",
+    "price": "Precio",
+    "color": "Color",
+    "brand": "Marca",
+    "sort": {
+      "label": "Ordenar por",
+      "newest": "Más reciente",
+      "priceAsc": "Precio: Menor a Mayor",
+      "priceDesc": "Precio: Mayor a Menor"
+    }
+  }
+}

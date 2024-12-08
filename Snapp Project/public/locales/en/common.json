@@ -1,0 +1,45 @@
+{
+  "app": {
+    "name": "Snapp",
+    "tagline": "Find your perfect fit in seconds"
+  },
+  "features": {
+    "snap": {
+      "title": "Snap a Photo",
+      "description": "Take a picture of any clothing item that catches your eye"
+    },
+    "match": {
+      "title": "Discover Matches",
+      "description": "Our AI instantly finds similar styles from thousands of products"
+    },
+    "shop": {
+      "title": "Shop Your Style",
+      "description": "Compare prices and buy directly from your favorite stores"
+    }
+  },
+  "cta": {
+    "findNow": "Find It Now",
+    "snapShop": "Snap & Shop",
+    "download": "Download Now"
+  },
+  "results": {
+    "title": "Similar Styles Found",
+    "match": "{{confidence}}% match",
+    "price": "Price",
+    "stores": "Available at {{count}} stores",
+    "bestPrice": "Best Price",
+    "freeShipping": "Free Shipping"
+  },
+  "filters": {
+    "category": "Category",
+    "price": "Price",
+    "color": "Color",
+    "brand": "Brand",
+    "sort": {
+      "label": "Sort by",
+      "newest": "Newest",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low"
+    }
+  }
+}
